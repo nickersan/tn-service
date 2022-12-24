@@ -36,4 +36,21 @@
     
   </dependencies>
 
+  <repositories>
+
+    <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/nickersan/maven-repository</url>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>never</updatePolicy>
+      </snapshots>
+    </repository>
+
+  </repositories>
+
 </project>
