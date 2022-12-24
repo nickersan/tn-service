@@ -11,7 +11,7 @@
   <parent>
     <groupId>com.tn</groupId>
     <artifactId>tn-parent</artifactId>
-    <version>0.0.01-SNAPSHOT</version>
+    <version>0.0.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>tn-service</artifactId>
@@ -21,47 +21,19 @@
 
   <dependencies>
 
-    <!-- tn -->
-
-    <dependency>
-      <groupId>com.tn</groupId>
-      <artifactId>tn-lang</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>com.tn.query</groupId>
       <artifactId>tn-query</artifactId>
-      <version>0.0.01-SNAPSHOT</version>
+      <version>0.0.1-SNAPSHOT</version>
     </dependency>
 
     <!-- 3rd party -->
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
-
+    
   </dependencies>
 
-  <repositories>
-    <repository>
-      <id>github</id>
-      <url>https://maven.pkg.github.com/nickersan/maven-repository</url>
-      <releases>
-        <enabled>true</enabled>
-        <updatePolicy>always</updatePolicy>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-        <updatePolicy>never</updatePolicy>
-      </snapshots>
-    </repository>
-
-  </repositories>
-
- </project>
+</project>
