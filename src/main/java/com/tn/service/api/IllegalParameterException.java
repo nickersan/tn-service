@@ -1,6 +1,6 @@
 package com.tn.service.api;
 
-public class IllegalParameterException extends RuntimeException
+public class IllegalParameterException extends Exception
 {
   public IllegalParameterException(String message)
   {

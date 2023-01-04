@@ -1,4 +1,4 @@
-package com.tn.ps.service.api;
+package com.tn.service.api.query;
 
 import static java.lang.String.format;
 import static java.util.Collections.emptySet;
@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.util.MultiValueMap;
+
+import com.tn.service.api.IllegalParameterException;
 
 public class QueryBuilder
 {

@@ -22,12 +22,31 @@
   <dependencies>
 
     <dependency>
+      <groupId>com.tn</groupId>
+      <artifactId>tn-lang</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
       <groupId>com.tn.query</groupId>
       <artifactId>tn-query</artifactId>
       <version>0.0.1-SNAPSHOT</version>
     </dependency>
 
     <!-- 3rd party -->
+
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.4.5</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- vulnerability in snakeyaml - not yet fixed - 2022-12-24 -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
