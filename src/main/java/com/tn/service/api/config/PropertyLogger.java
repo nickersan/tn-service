@@ -1,13 +1,13 @@
 package com.tn.service.api.config;
 
-import static java.util.Collections.emptyMap;
 import static java.util.function.Function.identity;
 
 import static com.tn.lang.Strings.EMPTY;
 import static com.tn.lang.Strings.isNullOrWhitespace;
 
+import java.nio.CharBuffer;
 import java.util.Collection;
-import java.util.Map;
+import java.util.List;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
@@ -19,17 +19,30 @@ import org.springframework.core.env.MapPropertySource;
 public class PropertyLogger
 {
   private final Logger logger;
-  private final Map<String, Function<String, String>> valueFormatters;
+  private final Collection<ValueFormatter> valueFormatters;
 
-  public PropertyLogger(Logger logger)
-  {
-    this(logger, emptyMap());
-  }
-
-  public PropertyLogger(Logger logger, Map<String, Function<String, String>> valueFormatters)
+  public PropertyLogger(Logger logger, ValueFormatter... valueFormatters)
   {
     this.logger = logger;
-    this.valueFormatters = valueFormatters;
+    this.valueFormatters = List.of(valueFormatters);
+  }
+
+  public static ValueFormatter sensitive(String nameRegex)
+  {
+    return new ValueFormatter()
+    {
+      @Override
+      public boolean matches(String name)
+      {
+        return name.matches(nameRegex);
+      }
+
+      @Override
+      public String format(String value)
+      {
+        return CharBuffer.allocate(value.length()).toString().replace('\0', 'X');
+      }
+    };
   }
 
   @EventListener
@@ -53,6 +66,27 @@ public class PropertyLogger
 
     if (isNullOrWhitespace(value)) return EMPTY;
 
-    return valueFormatters.getOrDefault(name, identity()).apply(value);
+    return valueFormatter(name).apply(value);
+  }
+
+  private Function<String, String> valueFormatter(String name)
+  {
+    return this.valueFormatters.stream()
+      .filter(valueFormatter -> valueFormatter.matches(name))
+      .findFirst()
+      .map(this::formatWith)
+      .orElse(identity());
+  }
+
+  private Function<String, String> formatWith(ValueFormatter valueFormatter)
+  {
+    return valueFormatter::format;
+  }
+
+  public interface ValueFormatter
+  {
+    boolean matches(String name);
+
+    String format(String value);
   }
 }

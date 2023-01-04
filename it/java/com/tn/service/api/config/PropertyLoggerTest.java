@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 
 @SuppressWarnings("SpringBootApplicationProperties")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, properties = "x=y")
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, properties = { "x=y", "secret=value" })
 @ContextConfiguration(classes = PropertyLoggerTest.TestConfiguration.class)
 public class PropertyLoggerTest
 {
@@ -23,6 +23,7 @@ public class PropertyLoggerTest
   void shouldLogPropertiesWhenApplicationContextRefreshed()
   {
     verify(logger).info("{}={}", "x", "y");
+    verify(logger).info("{}={}", "secret", "XXXXX");
   }
 
   @Configuration
@@ -37,7 +38,7 @@ public class PropertyLoggerTest
     @Bean
     PropertyLogger propertyLogger(Logger logger)
     {
-      return new PropertyLogger(logger);
+      return new PropertyLogger(logger, PropertyLogger.sensitive(".*sec.*"));
     }
   }
 }
