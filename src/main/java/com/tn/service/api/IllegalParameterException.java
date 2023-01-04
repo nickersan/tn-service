@@ -1,4 +1,4 @@
-package com.tn.ps.service.api;
+package com.tn.service.api;
 
 public class IllegalParameterException extends Exception
 {
