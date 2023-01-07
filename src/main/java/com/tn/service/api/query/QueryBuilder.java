@@ -10,6 +10,7 @@ import static com.tn.query.Query.AND;
 import static com.tn.query.Query.OR;
 import static com.tn.query.Query.PARENTHESIS_CLOSE;
 import static com.tn.query.Query.PARENTHESIS_OPEN;
+import static com.tn.query.Query.parse;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -24,6 +25,9 @@ import java.util.stream.Stream;
 
 import org.springframework.util.MultiValueMap;
 
+import com.tn.query.node.And;
+import com.tn.query.node.Node;
+import com.tn.query.node.Or;
 import com.tn.service.api.IllegalParameterException;
 
 public class QueryBuilder
@@ -59,7 +63,25 @@ public class QueryBuilder
     }
   }
 
-  private String or(Map.Entry<String, List<String>> entry)
+  private void checkQuery(Node query) throws IllegalParameterException
+  {
+    Object left = query.getLeft();
+
+    if (left instanceof String)
+    {
+      if (!fieldNames.contains(left))
+      {
+        throw new IllegalParameterException("Unknown param: " + left);
+      }
+    }
+    else if (left instanceof Node)
+    {
+      checkQuery((Node)left);
+      if (query.getRight() instanceof Node) checkQuery((Node)query.getRight());
+    }
+  }
+
+  private String or(Map.Entry<String, List<String>> entry) throws IllegalParameterException
   {
     String name = entry.getKey();
     Collection<String> values = entry.getValue();
@@ -74,11 +96,14 @@ public class QueryBuilder
       .collect(collector);
   }
 
-  private String query(String name, String value)
+  private String query(String name, String value) throws IllegalParameterException
   {
     if (PARAM_QUERY.equals(name))
     {
-      return value.contains(AND) || value.contains(OR) ? format(TEMPLATE_PARENTHESIS, value) : value;
+      Node query = parse(value);
+      checkQuery(query);
+
+      return query instanceof And || query instanceof Or ? format(TEMPLATE_PARENTHESIS, value) : value;
     }
     else
     {

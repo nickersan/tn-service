@@ -12,7 +12,7 @@ import com.tn.service.api.IllegalParameterException;
 class QueryBuilderTest
 {
   @Test
-  void shouldBuildQuery() throws Exception
+  void shouldBuildQuery()
   {
     QueryBuilder queryBuilder = new QueryBuilder(Subject.class, "id");
 
@@ -26,7 +26,7 @@ class QueryBuilderTest
   }
 
   @Test
-  void shouldReturnQueryParam() throws Exception
+  void shouldReturnQueryParam()
   {
     QueryBuilder queryBuilder = new QueryBuilder(Subject.class);
 
@@ -37,7 +37,7 @@ class QueryBuilderTest
   }
 
   @Test
-  void shouldBuildQueryWithQueryParam() throws Exception
+  void shouldBuildQueryWithQueryParam()
   {
     QueryBuilder queryBuilder = new QueryBuilder(Subject.class);
 
@@ -49,7 +49,7 @@ class QueryBuilderTest
   }
 
   @Test
-  void shouldRejectUnknownParams()
+  void shouldRejectUnknownParam()
   {
     QueryBuilder queryBuilder = new QueryBuilder(Subject.class);
 
@@ -60,12 +60,56 @@ class QueryBuilderTest
   }
 
   @Test
-  void shouldRejectExcludedParams()
+  void shouldRejectUnknownQueryParam()
+  {
+    QueryBuilder queryBuilder = new QueryBuilder(Subject.class);
+
+    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("q", "unknown=!");
+
+    assertThrows(IllegalParameterException.class, () -> queryBuilder.build(params));
+  }
+
+  @Test
+  void shouldRejectQueryWithUnknownParamLeft()
+  {
+    QueryBuilder queryBuilder = new QueryBuilder(Subject.class);
+
+    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("q", "unknown=!||name=X");
+
+    assertThrows(IllegalParameterException.class, () -> queryBuilder.build(params));
+  }
+
+  @Test
+  void shouldRejectQueryWithUnknownParamRight()
+  {
+    QueryBuilder queryBuilder = new QueryBuilder(Subject.class);
+
+    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("q", "name=X&&unknown=!");
+
+    assertThrows(IllegalParameterException.class, () -> queryBuilder.build(params));
+  }
+
+  @Test
+  void shouldRejectExcludedParam()
   {
     QueryBuilder queryBuilder = new QueryBuilder(Subject.class, "id");
 
     MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
     params.add("id", "1");
+
+    assertThrows(IllegalParameterException.class, () -> queryBuilder.build(params));
+  }
+
+  @Test
+  void shouldRejectExcludedQueryParam()
+  {
+    QueryBuilder queryBuilder = new QueryBuilder(Subject.class, "id");
+
+    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("q", "id=1");
 
     assertThrows(IllegalParameterException.class, () -> queryBuilder.build(params));
   }
