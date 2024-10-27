@@ -1,4 +1,4 @@
-package com.tn.service.api.query;
+package com.tn.service.query;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import com.tn.service.api.IllegalParameterException;
+import com.tn.service.IllegalParameterException;
 
 class QueryBuilderTest
 {

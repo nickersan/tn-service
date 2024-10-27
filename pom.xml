@@ -11,7 +11,7 @@
   <parent>
     <groupId>com.tn</groupId>
     <artifactId>tn-parent</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.01-SNAPSHOT</version>
   </parent>
 
   <artifactId>tn-service</artifactId>
@@ -24,13 +24,13 @@
     <dependency>
       <groupId>com.tn</groupId>
       <artifactId>tn-lang</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>0.0.01-SNAPSHOT</version>
     </dependency>
 
     <dependency>
       <groupId>com.tn.query</groupId>
       <artifactId>tn-query</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>0.0.01-SNAPSHOT</version>
     </dependency>
 
     <!-- 3rd party -->
@@ -38,7 +38,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.4.5</version>
+      <version>1.5.6</version>
       <scope>test</scope>
     </dependency>
 

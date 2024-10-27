@@ -1,9 +1,13 @@
 package com.tn.service;
 
+import static java.util.function.Function.identity;
+
+import static com.tn.lang.Strings.EMPTY;
+import static com.tn.lang.Strings.isNullOrWhitespace;
+
 import java.nio.CharBuffer;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 
@@ -13,8 +17,6 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.MapPropertySource;
 
-import com.tn.lang.Strings;
-
 public class PropertyLogger implements ApplicationListener<ApplicationPreparedEvent>
 {
   public static final String REGEX_PASSWORD = ".*password.*";
@@ -22,6 +24,7 @@ public class PropertyLogger implements ApplicationListener<ApplicationPreparedEv
 
   private final Logger logger;
   private final Collection<ValueFormatter> valueFormatters;
+
   private boolean firstRun = true;
 
   public PropertyLogger(Logger logger, ValueFormatter... valueFormatters)
@@ -30,7 +33,7 @@ public class PropertyLogger implements ApplicationListener<ApplicationPreparedEv
     this.valueFormatters = List.of(valueFormatters);
   }
 
-  public static PropertyLogger.ValueFormatter sensitive(String nameRegex)
+  public static ValueFormatter sensitive(String nameRegex)
   {
     return new ValueFormatter()
     {
@@ -43,49 +46,53 @@ public class PropertyLogger implements ApplicationListener<ApplicationPreparedEv
       @Override
       public String format(String value)
       {
-        return CharBuffer.allocate(value.length()).toString().replace('\u0000', '*');
+        return CharBuffer.allocate(value.length()).toString().replace('\0', 'X');
       }
     };
   }
 
+  @Override
   public void onApplicationEvent(@Nonnull ApplicationPreparedEvent event)
   {
-    if (this.firstRun)
+    if (firstRun)
     {
-      this.firstRun = false;
-      this.printProperties(event.getApplicationContext().getEnvironment());
+      firstRun = false;
+      printProperties(event.getApplicationContext().getEnvironment());
     }
   }
 
   private void printProperties(ConfigurableEnvironment environment)
   {
-    environment.getPropertySources().stream()
+    environment.getPropertySources()
+      .stream()
       .filter(propertySource -> propertySource instanceof MapPropertySource)
       .map(propertySource -> ((MapPropertySource)propertySource).getSource().keySet())
       .flatMap(Collection::stream)
       .distinct()
       .sorted()
-      .forEach(name -> this.logger.info("{}={}", name, value(environment, name)));
+      .forEach(name -> logger.info("{}={}", name, value(environment, name)));
   }
 
   private String value(ConfigurableEnvironment environment, String name)
   {
     String value = environment.getProperty(name);
-    return Strings.isNullOrWhitespace(value) ? Strings.EMPTY : this.valueFormatter(name).apply(value);
+
+    if (isNullOrWhitespace(value)) return EMPTY;
+
+    return valueFormatter(name).apply(value);
   }
 
   private Function<String, String> valueFormatter(String name)
   {
     return this.valueFormatters.stream()
-      .filter((valueFormatter) -> valueFormatter.matches(name))
+      .filter(valueFormatter -> valueFormatter.matches(name))
       .findFirst()
       .map(this::formatWith)
-      .orElse(Function.identity());
+      .orElse(identity());
   }
 
   private Function<String, String> formatWith(ValueFormatter valueFormatter)
   {
-    Objects.requireNonNull(valueFormatter);
     return valueFormatter::format;
   }
 
