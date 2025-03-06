@@ -40,7 +40,12 @@ public class QueryBuilder
 
   public QueryBuilder(Class<?> subject, String... excludedFields)
   {
-    this.fieldNames = fieldNames(subject, Set.of(excludedFields));
+    this(fieldNames(subject, Set.of(excludedFields)));
+  }
+
+  public QueryBuilder(Collection<String> fieldNames)
+  {
+    this.fieldNames = fieldNames;
   }
 
   public String build(MultiValueMap<String, String> params) throws IllegalParameterException
@@ -111,7 +116,7 @@ public class QueryBuilder
     }
   }
 
-  private Collection<String> fieldNames(Class<?> subject, Collection<String> excludedFields)
+  private static Collection<String> fieldNames(Class<?> subject, Collection<String> excludedFields)
   {
     if (Object.class.equals(subject)) return emptySet();
 
