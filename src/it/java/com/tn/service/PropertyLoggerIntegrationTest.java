@@ -14,24 +14,25 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ContextConfiguration(classes = PropertyLoggerIntegrationTest.TestConfiguration.class)
+@SuppressWarnings("SpringBootApplicationProperties")
+@TestPropertySource(properties = {"x=y", "secret=XXXXX"})
 public class PropertyLoggerIntegrationTest
 {
   @Autowired
-  ApplicationEventPublisher publisher;
-  @Autowired
   ConfigurableApplicationContext configurableApplicationContext;
+  @Autowired
+  ApplicationEventPublisher publisher;
   @Autowired
   Logger logger;
 
   @Test
   void shouldLogPropertiesWhenApplicationContextRefreshed()
   {
-    SpringApplication springApplication = mock(SpringApplication.class);
-
-    publisher.publishEvent(new ApplicationPreparedEvent(springApplication, new String[0], configurableApplicationContext));
+    publisher.publishEvent(new ApplicationPreparedEvent(mock(SpringApplication.class), new String[0], configurableApplicationContext));
 
     verify(logger).info("{}={}", "x", "y");
     verify(logger).info("{}={}", "secret", "XXXXX");
@@ -53,3 +54,4 @@ public class PropertyLoggerIntegrationTest
     }
   }
 }
+

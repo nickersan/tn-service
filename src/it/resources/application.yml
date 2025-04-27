@@ -1,5 +1,0 @@
-#file: noinspection SpringBootApplicationYaml
-
-# properties used in PropertyLoggingIntegrationTest.
-x: y
-secret: value
