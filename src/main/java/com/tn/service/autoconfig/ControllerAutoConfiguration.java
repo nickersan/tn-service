@@ -1,8 +1,8 @@
 package com.tn.service.autoconfig;
 
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 
-@Configuration
+@AutoConfiguration
 @ComponentScan("com.tn.service.controller")
 public class ControllerAutoConfiguration {}
