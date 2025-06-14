@@ -6,4 +6,9 @@ public class IllegalParameterException extends RuntimeException
   {
     super(message);
   }
+
+  public IllegalParameterException(String message, Throwable cause)
+  {
+    super(message, cause);
+  }
 }
