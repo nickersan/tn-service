@@ -9,7 +9,8 @@ import java.nio.CharBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
-import javax.annotation.Nonnull;
+
+import jakarta.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.springframework.boot.context.event.ApplicationPreparedEvent;
