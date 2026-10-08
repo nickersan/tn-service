@@ -7,7 +7,7 @@
   <parent>
     <groupId>com.tn</groupId>
     <artifactId>tn-parent</artifactId>
-    <version>3.0.0</version>
+    <version>4.0.0</version>
   </parent>
 
   <groupId>com.tn.service</groupId>
@@ -16,11 +16,18 @@
 
   <packaging>jar</packaging>
 
+  <properties>
+
+    <tn-lang.version>1.3.1</tn-lang.version>
+
+  </properties>
+
   <dependencies>
 
     <dependency>
       <groupId>com.tn</groupId>
       <artifactId>tn-lang</artifactId>
+      <version>${tn-lang.version}</version>
     </dependency>
 
     <!-- 3rd party -->
