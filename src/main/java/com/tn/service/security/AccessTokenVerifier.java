@@ -6,6 +6,7 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 
 import io.jsonwebtoken.Claims;
@@ -21,6 +22,7 @@ public class AccessTokenVerifier
 {
   private static final String KEY_ALGORITHM = "RSA";
   private static final String CLAIM_TOKEN_USE = "token_use";
+  private static final String CLAIM_ROLES = "roles";
   private static final String TOKEN_USE_ACCESS = "access";
 
   private final JwtParser jwtParser;
@@ -57,6 +59,34 @@ public class AccessTokenVerifier
   public String subjectRequired(String token) throws InvalidAccessTokenException
   {
     return subject(token).orElseThrow(() -> new InvalidAccessTokenException("no subject"));
+  }
+
+  /**
+   * @param token the raw JWT, with no {@code Bearer } prefix
+   * @return the roles in the token's {@code roles} claim, in order; empty when it has none
+   * @throws InvalidAccessTokenException if the token is not a valid access token, or its {@code roles} is not a list of strings
+   */
+  public List<String> roles(String token) throws InvalidAccessTokenException
+  {
+    Object roles = accessTokenClaims(token).get(CLAIM_ROLES);
+
+    if (roles == null) return List.of();
+    if (!(roles instanceof List<?> list) || !list.stream().allMatch(String.class::isInstance)) throw new InvalidAccessTokenException("roles is not a list of strings");
+
+    return list.stream().map(String.class::cast).toList();
+  }
+
+  /**
+   * A role is a fact about the token's holder at sign-in and does not change for the life of the session, so it says who they were
+   * then, not who they are now.
+   *
+   * @param token the raw JWT, with no {@code Bearer } prefix
+   * @return whether the token's {@code roles} contains {@code role}
+   * @throws InvalidAccessTokenException as for {@link #roles(String)}
+   */
+  public boolean hasRole(String token, String role) throws InvalidAccessTokenException
+  {
+    return roles(token).contains(role);
   }
 
   private static PublicKey publicKey(String publicKey) throws NoSuchAlgorithmException, InvalidKeySpecException

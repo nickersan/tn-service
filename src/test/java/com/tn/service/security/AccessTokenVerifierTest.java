@@ -1,14 +1,17 @@
 package com.tn.service.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.security.KeyPair;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import io.jsonwebtoken.Jwts;
@@ -101,6 +104,63 @@ class AccessTokenVerifierTest
     assertRejected("not-a-jwt");
   }
 
+  @Test
+  void shouldReturnTheRolesOfAValidAccessTokenInOrder()
+  {
+    String token = token(KEY_PAIR, ISSUER, SUBJECT, ACCESS, inTenMinutes(), List.of("system-administrator", "support"));
+
+    assertEquals(List.of("system-administrator", "support"), accessTokenVerifier.roles(token));
+    assertTrue(accessTokenVerifier.hasRole(token, "system-administrator"));
+    assertTrue(accessTokenVerifier.hasRole(token, "support"));
+    assertFalse(accessTokenVerifier.hasRole(token, "moderator"));
+  }
+
+  @Test
+  void shouldReturnNoRolesForAnAccessTokenWithoutTheClaimOrWithAnEmptyOne()
+  {
+    String without = token(KEY_PAIR, ISSUER, SUBJECT, ACCESS, inTenMinutes());
+    String empty = token(KEY_PAIR, ISSUER, SUBJECT, ACCESS, inTenMinutes(), List.of());
+
+    assertEquals(List.of(), accessTokenVerifier.roles(without));
+    assertEquals(List.of(), accessTokenVerifier.roles(empty));
+    assertFalse(accessTokenVerifier.hasRole(without, "system-administrator"));
+  }
+
+  @Test
+  void shouldNotMatchARoleByPrefixOrCase()
+  {
+    String token = token(KEY_PAIR, ISSUER, SUBJECT, ACCESS, inTenMinutes(), List.of("system-administrator"));
+
+    assertFalse(accessTokenVerifier.hasRole(token, "system"));
+    assertFalse(accessTokenVerifier.hasRole(token, "System-Administrator"));
+  }
+
+  @Test
+  void shouldRejectRolesOnARefreshToken()
+  {
+    String token = token(KEY_PAIR, ISSUER, SUBJECT, "refresh", inTenMinutes(), List.of("system-administrator"));
+
+    assertRejected(() -> accessTokenVerifier.roles(token));
+    assertRejected(() -> accessTokenVerifier.hasRole(token, "system-administrator"));
+  }
+
+  @Test
+  void shouldRejectRolesOnAnInvalidToken()
+  {
+    assertRejected(() -> accessTokenVerifier.roles(token(OTHER_KEY_PAIR, ISSUER, SUBJECT, ACCESS, inTenMinutes(), List.of("system-administrator"))));
+    assertRejected(() -> accessTokenVerifier.roles(token(KEY_PAIR, "someone-else", SUBJECT, ACCESS, inTenMinutes(), List.of("system-administrator"))));
+    assertRejected(() -> accessTokenVerifier.roles(token(KEY_PAIR, ISSUER, SUBJECT, ACCESS, Instant.now().minus(1, ChronoUnit.MINUTES), List.of("system-administrator"))));
+    assertRejected(() -> accessTokenVerifier.roles(null));
+    assertRejected(() -> accessTokenVerifier.hasRole("not-a-jwt", "system-administrator"));
+  }
+
+  @Test
+  void shouldRejectRolesThatAreNotAListOfStrings()
+  {
+    assertRejected(() -> accessTokenVerifier.roles(token(KEY_PAIR, ISSUER, SUBJECT, ACCESS, inTenMinutes(), "system-administrator")));
+    assertRejected(() -> accessTokenVerifier.roles(token(KEY_PAIR, ISSUER, SUBJECT, ACCESS, inTenMinutes(), List.of(1, 2))));
+  }
+
   private void assertRejected(String token)
   {
     assertRejected(() -> accessTokenVerifier.subject(token));
@@ -119,10 +179,16 @@ class AccessTokenVerifierTest
 
   private String token(KeyPair keyPair, String issuer, String subject, Object tokenUse, Instant expiration)
   {
+    return token(keyPair, issuer, subject, tokenUse, expiration, null);
+  }
+
+  private String token(KeyPair keyPair, String issuer, String subject, Object tokenUse, Instant expiration, Object roles)
+  {
     return Jwts.builder()
       .subject(subject)
       .issuer(issuer)
       .claim("token_use", tokenUse)
+      .claim("roles", roles)
       .expiration(Date.from(expiration))
       .signWith(keyPair.getPrivate())
       .compact();
