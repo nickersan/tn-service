@@ -18,7 +18,7 @@ import org.springframework.util.StringUtils;
  * The probe settings are defaults of the lowest priority, so a service's own setting wins. The endpoints exposed are merged with what the
  * service exposes, not replaced by it, so a service that exposes {@code env} keeps it. Only {@code health} and {@code resilience} are added.
  * <p>
- * Readiness is the readiness state and, where the service has one, its datasource ({@code db}); a name that matches nothing is ignored.
+ * Readiness is the readiness state and, where the service has one, its datasource ({@code db}); a service with none would fail to start on the unknown name, so group membership is not validated.
  * It never includes another service.
  */
 public class HealthEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered
@@ -32,7 +32,8 @@ public class HealthEnvironmentPostProcessor implements EnvironmentPostProcessor,
   private static final Map<String, Object> DEFAULT_PROPERTIES = Map.of(
     "management.endpoint.health.probes.enabled", "true",
     "management.endpoint.health.show-details", "never",
-    "management.endpoint.health.group.readiness.include", "readinessState,db"
+    "management.endpoint.health.group.readiness.include", "readinessState,db",
+    "management.endpoint.health.validate-group-membership", "false"
   );
 
   @Override

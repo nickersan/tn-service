@@ -7,7 +7,7 @@ TN Service provides useful service level utility classes and functions.
 A service that depends on tn-service is given, without configuring anything:
 
 - `GET /actuator/health/liveness`: the process is running. Nothing outside the process is asked.
-- `GET /actuator/health/readiness`: the service can do its own work, that is, it has started and, if it has a datasource, the datasource is reachable.
+- `GET /actuator/health/readiness`: the service can do its own work, that is, it has started and, if it has a datasource, the datasource is reachable. A service with no datasource has no `db` contributor, so group membership is not validated (`management.endpoint.health.validate-group-membership=false`); a service can set it back.
   It answers 503 until then. It never depends on another service: a service whose dependency is down, or whose circuit breaker is open, is still ready.
 - `GET /actuator/resilience`: the state of the protection of each service called (see tn-resilience); present where tn-resilience is.
 - `GET /noop` is unchanged (`tn.service.noop.enabled`).
