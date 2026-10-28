@@ -19,6 +19,7 @@
   <properties>
 
     <tn-lang.version>1.3.4</tn-lang.version>
+    <tn-resilience.version>1.2.0</tn-resilience.version>
 
   </properties>
 
@@ -28,6 +29,28 @@
       <groupId>com.tn</groupId>
       <artifactId>tn-lang</artifactId>
       <version>${tn-lang.version}</version>
+    </dependency>
+
+    <!-- test: the resilience endpoint, and a datasource to be ready on -->
+
+    <dependency>
+      <groupId>com.tn.resilience</groupId>
+      <artifactId>tn-resilience</artifactId>
+      <version>${tn-resilience.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jdbc</artifactId>
+      <version>${spring-boot.version}</version>
+      <scope>test</scope>
     </dependency>
 
     <!-- 3rd party -->
