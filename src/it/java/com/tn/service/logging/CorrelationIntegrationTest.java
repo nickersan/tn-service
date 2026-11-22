@@ -186,14 +186,16 @@ class CorrelationIntegrationTest
 
   /** A request is logged once. */
   @Test
-  void shouldLogARequestOnceWithItsMethodPathStatusAndTime() throws Exception
+  void shouldLogARequestOnceWithItsMethodPathQueryStatusAndTime() throws Exception
   {
-    get("/logged?page=2&size=10", "traceparent", TRACEPARENT, "baggage", "sessionId=s-1,client=web", "X-Secret", "do-not-log");
+    get("/logged?page=2&tag=a&tag=b", "traceparent", TRACEPARENT, "baggage", "sessionId=s-1,client=web", "X-Secret", "do-not-log");
 
     JsonNode line = requestLine();
     assertEquals("INFO", line.path("level").asString());
     assertEquals("GET", line.path("method").asString());
-    assertEquals("/logged?page=2&size=10", line.path("path").asString());
+    assertEquals("/logged", line.path("path").asString());
+    assertEquals("2", line.path("query").path("page").asString());
+    assertEquals(List.of("a", "b"), line.path("query").path("tag").valueStream().map(JsonNode::asString).toList());
     assertEquals(200, line.path("status").asInt());
     assertTrue(line.path("durationMs").isNumber());
     assertEquals(TRACE_ID, line.path("traceId").asString());
