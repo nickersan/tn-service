@@ -1,0 +1,10 @@
+{
+  "properties": [
+    {
+      "name": "tn.logging.edge",
+      "type": "java.lang.Boolean",
+      "description": "Whether this service is an edge (a BFF), which discards the userId baggage it is sent, so no caller can make its log lines look like someone else's.",
+      "defaultValue": false
+    }
+  ]
+}

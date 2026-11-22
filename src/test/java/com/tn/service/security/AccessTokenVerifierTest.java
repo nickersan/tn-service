@@ -9,14 +9,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.security.KeyPair;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import com.tn.service.logging.RequestBaggage;
 
 class AccessTokenVerifierTest
 {
@@ -159,6 +166,53 @@ class AccessTokenVerifierTest
   {
     assertRejected(() -> accessTokenVerifier.roles(token(KEY_PAIR, ISSUER, SUBJECT, ACCESS, inTenMinutes(), "system-administrator")));
     assertRejected(() -> accessTokenVerifier.roles(token(KEY_PAIR, ISSUER, SUBJECT, ACCESS, inTenMinutes(), List.of(1, 2))));
+  }
+
+  @Test
+  void shouldPutTheSubjectOfAnAcceptedTokenInTheRequestsBaggage()
+  {
+    List<String> baggage = inRequestWithBaggage();
+
+    try
+    {
+      accessTokenVerifier.subject(token(KEY_PAIR, ISSUER, SUBJECT, ACCESS, inTenMinutes()));
+      accessTokenVerifier.subject(token(KEY_PAIR, ISSUER, null, ACCESS, inTenMinutes()));
+    }
+    finally
+    {
+      RequestContextHolder.resetRequestAttributes();
+    }
+
+    assertEquals(List.of("userId=" + SUBJECT), baggage);
+  }
+
+  @Test
+  void shouldPutNothingInTheRequestsBaggageForARejectedToken()
+  {
+    List<String> baggage = inRequestWithBaggage();
+
+    try
+    {
+      assertRejected(token(KEY_PAIR, ISSUER, SUBJECT, "refresh", inTenMinutes()));
+      assertRejected(token(OTHER_KEY_PAIR, ISSUER, SUBJECT, ACCESS, inTenMinutes()));
+    }
+    finally
+    {
+      RequestContextHolder.resetRequestAttributes();
+    }
+
+    assertTrue(baggage.isEmpty());
+  }
+
+  private List<String> inRequestWithBaggage()
+  {
+    List<String> baggage = new ArrayList<>();
+    BiConsumer<String, String> requestBaggage = (name, value) -> baggage.add(name + "=" + value);
+    MockHttpServletRequest request = new MockHttpServletRequest();
+    request.setAttribute(RequestBaggage.class.getName(), requestBaggage);
+    RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+    return baggage;
   }
 
   private void assertRejected(String token)

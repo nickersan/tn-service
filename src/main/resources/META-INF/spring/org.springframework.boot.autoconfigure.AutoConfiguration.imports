@@ -1,1 +1,2 @@
 com.tn.service.autoconfig.ControllerAutoConfiguration
+com.tn.service.autoconfig.LoggingAutoConfiguration

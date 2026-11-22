@@ -1,1 +1,5 @@
-org.springframework.boot.EnvironmentPostProcessor=com.tn.service.health.HealthEnvironmentPostProcessor
+org.springframework.boot.EnvironmentPostProcessor=\
+com.tn.service.health.HealthEnvironmentPostProcessor,\
+com.tn.service.logging.CorrelationEnvironmentPostProcessor
+org.springframework.context.ApplicationListener=\
+com.tn.service.logging.ServiceLoggerContextListener
