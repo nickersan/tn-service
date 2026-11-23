@@ -32,7 +32,7 @@ class RequestBaggageFilterTest
   {
     BaggageInScope userId = baggageInScope();
 
-    filter.doFilter(request, new MockHttpServletResponse(), (request, response) -> baggage(request).accept("userId", "1"));
+    filter.doFilter(request, new MockHttpServletResponse(), (request, response) -> baggage(request).accept("user.id", "1"));
 
     verify(userId).close();
     assertNull(request.getAttribute(RequestBaggage.ATTRIBUTE));
@@ -50,7 +50,7 @@ class RequestBaggageFilterTest
         new MockHttpServletResponse(),
         (request, response) ->
         {
-          baggage(request).accept("userId", "1");
+          baggage(request).accept("user.id", "1");
           throw new ServletException("failed");
         }
       )
@@ -75,7 +75,7 @@ class RequestBaggageFilterTest
     BaggageInScope baggageInScope = mock(BaggageInScope.class);
     when(tracer.currentSpan()).thenReturn(mock(Span.class));
     when(tracer.getAllBaggage()).thenReturn(Map.of());
-    when(tracer.createBaggageInScope("userId", "1")).thenReturn(baggageInScope);
+    when(tracer.createBaggageInScope("user.id", "1")).thenReturn(baggageInScope);
 
     return baggageInScope;
   }

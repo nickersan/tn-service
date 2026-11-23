@@ -1,5 +1,7 @@
 package com.tn.service.logging;
 
+import static net.logstash.logback.argument.StructuredArguments.kv;
+
 import java.security.KeyPair;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -86,6 +88,13 @@ class CorrelatedService
       log.info("verified");
       restClient.get().uri(to).retrieve().toBodilessEntity();
       log.info("called");
+    }
+
+    @GetMapping("/own-fields")
+    void ownFields(@RequestHeader(DelegateUserToken.HEADER) String token)
+    {
+      accessTokenVerifier.subjectRequired(token);
+      log.info("own fields", kv("userId", "own-user"), kv("sessionId", "own-session"), kv("client", "own-client"));
     }
   }
 }

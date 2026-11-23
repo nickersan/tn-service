@@ -20,7 +20,7 @@ import org.springframework.core.env.MapPropertySource;
 
 /**
  * Gives every service that depends on tn-service correlated log lines: a trace continued from the W3C {@code traceparent} it is sent, or
- * started, on every request, and the {@code userId}, {@code sessionId} and {@code client} baggage carried between services and put on
+ * started, on every request, and the {@code user.id}, {@code session.id} and {@code client.name} baggage carried between services and put on
  * every line.
  * <p>
  * Sampling and propagation are defaults of the lowest priority, so a service's own setting wins. The baggage fields are merged with what

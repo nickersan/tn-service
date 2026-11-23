@@ -21,7 +21,7 @@ import com.tn.service.logging.RequestBaggage;
  * {@code token_use} of {@code access} - a refresh token is never accepted as an access token.
  * <p>
  * A token it accepts while a request is handled puts the token's subject on the request's later log lines, and those of the services it
- * calls, as {@code userId} ({@link RequestBaggage}). That is for logs only: the acting user is the subject this verifier returns.
+ * calls, as {@code user.id} ({@link RequestBaggage#USER_ID}). That is for logs only: the acting user is the subject this verifier returns.
  */
 public class AccessTokenVerifier
 {

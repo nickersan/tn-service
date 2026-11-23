@@ -24,7 +24,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * or headers. The query is a field of its own, an object of the parameters by name (decoded, a parameter given more than once as a list of
  * its values), absent when there is none, so a consumer masks a parameter by its name as it does any field; it is never in the message.
  * Runs inside the request's trace and writes the line once the request has been handled, so the line carries the trace and the baggage put
- * while handling it (the {@code userId} of a token verified on the way). Health probes and {@code /noop} are not logged.
+ * while handling it (the {@code user.id} of a token verified on the way). Health probes and {@code /noop} are not logged.
  */
 @Slf4j
 public class RequestLoggingFilter extends OncePerRequestFilter

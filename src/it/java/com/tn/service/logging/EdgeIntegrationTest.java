@@ -65,29 +65,37 @@ class EdgeIntegrationTest
     jsonLines.release();
   }
 
-  /** A client asserts a user. */
+  /** A client asserts a user, by the legacy name as well. */
   @Test
   void shouldDiscardTheUserAClientAsserts() throws Exception
   {
-    get("traceparent", TRACEPARENT, "baggage", "userId=someone,sessionId=s-1,client=web", "userId", "someone");
+    get(
+      "traceparent", TRACEPARENT,
+      "baggage", "user.id=someone,userId=someone-legacy,session.id=s-1,client.name=web",
+      "user.id", "someone",
+      "userId", "someone-legacy"
+    );
 
     List<JsonNode> lines = lines();
     assertEquals(4, lines.size());
+    lines.forEach(line -> assertTrue(line.path("user.id").isMissingNode(), line.toString()));
     lines.forEach(line -> assertTrue(line.path("userId").isMissingNode(), line.toString()));
-    lines.forEach(line -> assertEquals("s-1", line.path("sessionId").asString()));
+    lines.forEach(line -> assertEquals("s-1", line.path("session.id").asString()));
+    assertNull(stubServer.lastCall().getFirst("user.id"));
     assertNull(stubServer.lastCall().getFirst("userId"));
     assertFalse(stubServer.lastCall().getFirst("baggage").contains("someone"));
-    assertTrue(stubServer.lastCall().getFirst("baggage").contains("client=web"));
+    assertTrue(stubServer.lastCall().getFirst("baggage").contains("client.name=web"));
   }
 
   /** An edge still logs the user from a token it verifies. */
   @Test
   void shouldLogTheUserFromATokenItVerifies() throws Exception
   {
-    get("baggage", "userId=someone", DelegateUserToken.HEADER, CorrelatedService.token(SUBJECT));
+    get("baggage", "user.id=someone,userId=someone-legacy", DelegateUserToken.HEADER, CorrelatedService.token(SUBJECT));
 
-    assertEquals(List.of("", SUBJECT, SUBJECT, SUBJECT), lines().stream().map(line -> line.path("userId").asString("")).toList());
-    assertTrue(stubServer.lastCall().getFirst("baggage").contains("userId=" + SUBJECT));
+    assertEquals(List.of("", SUBJECT, SUBJECT, SUBJECT), lines().stream().map(line -> line.path("user.id").asString("")).toList());
+    assertTrue(stubServer.lastCall().getFirst("baggage").contains("user.id=" + SUBJECT));
+    assertFalse(stubServer.lastCall().getFirst("baggage").contains("someone"));
   }
 
   private void get(String... headers) throws IOException, InterruptedException

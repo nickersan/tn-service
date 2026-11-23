@@ -25,18 +25,37 @@ class EdgeBaggageFilterTest
   @Test
   void shouldDiscardTheUserIdInTheBaggage() throws Exception
   {
-    HttpServletRequest request = filtered(request().header(BAGGAGE, "sessionId=s1, userId=someone;prop=1 ,client=web"));
+    HttpServletRequest request = filtered(request().header(BAGGAGE, "session.id=s1, user.id=someone;prop=1 ,client.name=web"));
 
-    assertEquals("sessionId=s1,client=web", request.getHeader(BAGGAGE));
-    assertEquals(List.of("sessionId=s1,client=web"), list(request.getHeaders(BAGGAGE)));
+    assertEquals("session.id=s1,client.name=web", request.getHeader(BAGGAGE));
+    assertEquals(List.of("session.id=s1,client.name=web"), list(request.getHeaders(BAGGAGE)));
+  }
+
+  @Test
+  void shouldDiscardTheLegacyUserIdInTheBaggageAndHeaders() throws Exception
+  {
+    HttpServletRequest request = filtered(
+      request()
+        .header(BAGGAGE, "userId=someone, user.id=someone,session.id=s1")
+        .header("userId", "someone")
+        .header("user.id", "someone")
+        .header(TRACEPARENT, TRACE)
+    );
+
+    assertEquals("session.id=s1", request.getHeader(BAGGAGE));
+    assertNull(request.getHeader("userId"));
+    assertNull(request.getHeader("user.id"));
+    assertEquals(List.of(BAGGAGE, TRACEPARENT), list(request.getHeaderNames()));
   }
 
   @Test
   void shouldDiscardTheUserIdWhateverItsCase() throws Exception
   {
-    HttpServletRequest request = filtered(request().header("Baggage", "USERID=someone,client=web").header("UserId", "someone"));
+    HttpServletRequest request = filtered(request().header("Baggage", "USER.ID=someone,USERID=someone,client.name=web").header("User.Id", "someone").header("UserId", "someone"));
 
-    assertEquals("client=web", request.getHeader(BAGGAGE));
+    assertEquals("client.name=web", request.getHeader(BAGGAGE));
+    assertNull(request.getHeader("user.id"));
+    assertEquals(List.of(), list(request.getHeaders("user.ID")));
     assertNull(request.getHeader("userId"));
     assertEquals(List.of(), list(request.getHeaders("userid")));
   }
@@ -44,11 +63,11 @@ class EdgeBaggageFilterTest
   @Test
   void shouldDiscardABaggageHeaderThatHeldOnlyTheUserId() throws Exception
   {
-    HttpServletRequest request = filtered(request().header(BAGGAGE, "userId=someone").header(BAGGAGE, "client=web").header(TRACEPARENT, TRACE));
+    HttpServletRequest request = filtered(request().header(BAGGAGE, "user.id=someone").header(BAGGAGE, "client.name=web").header(TRACEPARENT, TRACE));
 
-    assertEquals(List.of("client=web"), list(request.getHeaders(BAGGAGE)));
+    assertEquals(List.of("client.name=web"), list(request.getHeaders(BAGGAGE)));
 
-    HttpServletRequest onlyUserId = filtered(request().header(BAGGAGE, "userId=someone").header("userId", "someone").header(TRACEPARENT, TRACE));
+    HttpServletRequest onlyUserId = filtered(request().header(BAGGAGE, "user.id=someone").header("user.id", "someone").header(TRACEPARENT, TRACE));
 
     assertNull(onlyUserId.getHeader(BAGGAGE));
     assertEquals(List.of(TRACEPARENT), list(onlyUserId.getHeaderNames()));
@@ -57,7 +76,7 @@ class EdgeBaggageFilterTest
   @Test
   void shouldKeepEveryOtherHeader() throws Exception
   {
-    HttpServletRequest request = filtered(request().header(TRACEPARENT, TRACE).header(BAGGAGE, "client=web"));
+    HttpServletRequest request = filtered(request().header(TRACEPARENT, TRACE).header(BAGGAGE, "client.name=web"));
 
     assertEquals(TRACE, request.getHeader(TRACEPARENT));
     assertEquals(List.of(TRACE), list(request.getHeaders(TRACEPARENT)));

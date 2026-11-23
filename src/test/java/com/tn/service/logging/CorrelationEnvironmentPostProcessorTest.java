@@ -30,8 +30,8 @@ class CorrelationEnvironmentPostProcessorTest
   {
     MockEnvironment environment = process(new MockEnvironment());
 
-    assertEquals("userId,sessionId,client", environment.getProperty(REMOTE_FIELDS));
-    assertEquals("userId,sessionId,client", environment.getProperty(CORRELATION_FIELDS));
+    assertEquals("user.id,session.id,client.name", environment.getProperty(REMOTE_FIELDS));
+    assertEquals("user.id,session.id,client.name", environment.getProperty(CORRELATION_FIELDS));
   }
 
   @Test
@@ -39,12 +39,12 @@ class CorrelationEnvironmentPostProcessorTest
   {
     MockEnvironment environment = process(
       new MockEnvironment()
-        .withProperty(REMOTE_FIELDS, "tenant, client")
+        .withProperty(REMOTE_FIELDS, "tenant, client.name")
         .withProperty(CORRELATION_FIELDS + "[0]", "tenant")
     );
 
-    assertEquals("tenant,client,userId,sessionId", environment.getProperty(REMOTE_FIELDS));
-    assertEquals("tenant,userId,sessionId,client", environment.getProperty(CORRELATION_FIELDS));
+    assertEquals("tenant,client.name,user.id,session.id", environment.getProperty(REMOTE_FIELDS));
+    assertEquals("tenant,user.id,session.id,client.name", environment.getProperty(CORRELATION_FIELDS));
   }
 
   @Test

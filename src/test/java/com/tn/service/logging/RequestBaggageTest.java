@@ -15,7 +15,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 class RequestBaggageTest
 {
-  private static final String NAME = "userId";
+  private static final String NAME = "user.id";
   private static final String VALUE = "891661201065939929";
 
   private final List<String> put = new ArrayList<>();

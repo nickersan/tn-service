@@ -10,15 +10,17 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import net.logstash.logback.encoder.LogstashEncoder;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.StreamReadFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * The lines a service logs, as the Logstash encoder its {@code logback-spring.xml} uses writes them, with its defaults.
+ * The lines a service logs, as the Logstash encoder its {@code logback-spring.xml} uses writes them, with its defaults. A line that holds
+ * a key twice fails to be read, so every test also proves no line has duplicate keys.
  */
 class JsonLines extends AppenderBase<ILoggingEvent>
 {
-  private static final JsonMapper JSON_MAPPER = JsonMapper.builder().build();
+  private static final JsonMapper JSON_MAPPER = JsonMapper.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION).build();
 
   private final List<JsonNode> lines = new CopyOnWriteArrayList<>();
   private final LogstashEncoder encoder = new LogstashEncoder();

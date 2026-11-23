@@ -124,12 +124,12 @@ class CorrelationIntegrationTest
   @Test
   void shouldLogAndSendOnTheSessionAndClientItIsSent() throws Exception
   {
-    get("/called?to=" + encode(stubServer.url()), "traceparent", TRACEPARENT, "baggage", "sessionId=s-1,client=web");
+    get("/called?to=" + encode(stubServer.url()), "traceparent", TRACEPARENT, "baggage", "session.id=s-1,client.name=web");
 
     List<JsonNode> lines = requestLines();
-    lines.forEach(line -> assertEquals("s-1", line.path("sessionId").asString()));
-    lines.forEach(line -> assertEquals("web", line.path("client").asString()));
-    assertBaggageSent("sessionId=s-1", "client=web");
+    lines.forEach(line -> assertEquals("s-1", line.path("session.id").asString()));
+    lines.forEach(line -> assertEquals("web", line.path("client.name").asString()));
+    assertBaggageSent("session.id=s-1", "client.name=web");
   }
 
   /** The user from a verified token. */
@@ -139,8 +139,8 @@ class CorrelationIntegrationTest
     get("/verified?to=" + encode(stubServer.url()), "traceparent", TRACEPARENT, DelegateUserToken.HEADER, CorrelatedService.token(SUBJECT));
 
     assertEquals(List.of("", SUBJECT, SUBJECT), userIds(jsonLines.linesFrom(CorrelatedService.Target.class)));
-    assertEquals(SUBJECT, requestLine().path("userId").asString());
-    assertBaggageSent("userId=" + SUBJECT);
+    assertEquals(SUBJECT, requestLine().path("user.id").asString());
+    assertBaggageSent("user.id=" + SUBJECT);
   }
 
   /** A verified token wins over a sent user. */
@@ -150,13 +150,13 @@ class CorrelationIntegrationTest
     get(
       "/verified?to=" + encode(stubServer.url()),
       "traceparent", TRACEPARENT,
-      "baggage", "userId=someone-else",
+      "baggage", "user.id=someone-else",
       DelegateUserToken.HEADER, CorrelatedService.token(SUBJECT)
     );
 
     assertEquals(List.of("someone-else", SUBJECT, SUBJECT), userIds(jsonLines.linesFrom(CorrelatedService.Target.class)));
-    assertEquals(SUBJECT, requestLine().path("userId").asString());
-    assertBaggageSent("userId=" + SUBJECT);
+    assertEquals(SUBJECT, requestLine().path("user.id").asString());
+    assertBaggageSent("user.id=" + SUBJECT);
     assertFalse(stubServer.lastCall().getFirst("baggage").contains("someone-else"));
   }
 
@@ -164,9 +164,9 @@ class CorrelationIntegrationTest
   @Test
   void shouldLogTheUserItIsSentWhenItIsNotAnEdge() throws Exception
   {
-    get("/logged", "baggage", "userId=" + SUBJECT);
+    get("/logged", "baggage", "user.id=" + SUBJECT);
 
-    requestLines().forEach(line -> assertEquals(SUBJECT, line.path("userId").asString()));
+    requestLines().forEach(line -> assertEquals(SUBJECT, line.path("user.id").asString()));
   }
 
   /** Nothing is carried from one request to the next on the same thread. */
@@ -181,14 +181,31 @@ class CorrelationIntegrationTest
 
     jsonLines.linesFrom(CorrelatedService.Target.class).stream()
       .filter(line -> line.path("message").asString().equals("first"))
-      .forEach(line -> assertTrue(line.path("userId").isMissingNode(), line.toString()));
+      .forEach(line -> assertTrue(line.path("user.id").isMissingNode(), line.toString()));
+  }
+
+  /** A service's own fields of the same names are fields of their own, beside the correlation fields. */
+  @Test
+  void shouldLogAServicesOwnUserSessionAndClientBesideTheCorrelationFields() throws Exception
+  {
+    get("/own-fields", "baggage", "session.id=s-1,client.name=web", DelegateUserToken.HEADER, CorrelatedService.token(SUBJECT));
+
+    List<JsonNode> lines = jsonLines.linesFrom(CorrelatedService.Target.class);
+    assertEquals(1, lines.size());
+    JsonNode line = lines.getFirst();
+    assertEquals(SUBJECT, line.path("user.id").asString());
+    assertEquals("s-1", line.path("session.id").asString());
+    assertEquals("web", line.path("client.name").asString());
+    assertEquals("own-user", line.path("userId").asString());
+    assertEquals("own-session", line.path("sessionId").asString());
+    assertEquals("own-client", line.path("client").asString());
   }
 
   /** A request is logged once. */
   @Test
   void shouldLogARequestOnceWithItsMethodPathQueryStatusAndTime() throws Exception
   {
-    get("/logged?page=2&tag=a&tag=b", "traceparent", TRACEPARENT, "baggage", "sessionId=s-1,client=web", "X-Secret", "do-not-log");
+    get("/logged?page=2&tag=a&tag=b", "traceparent", TRACEPARENT, "baggage", "session.id=s-1,client.name=web", "X-Secret", "do-not-log");
 
     JsonNode line = requestLine();
     assertEquals("INFO", line.path("level").asString());
@@ -199,8 +216,8 @@ class CorrelationIntegrationTest
     assertEquals(200, line.path("status").asInt());
     assertTrue(line.path("durationMs").isNumber());
     assertEquals(TRACE_ID, line.path("traceId").asString());
-    assertEquals("s-1", line.path("sessionId").asString());
-    assertEquals("web", line.path("client").asString());
+    assertEquals("s-1", line.path("session.id").asString());
+    assertEquals("web", line.path("client.name").asString());
     assertFalse(line.toString().contains("do-not-log"));
   }
 
@@ -266,7 +283,7 @@ class CorrelationIntegrationTest
 
   private List<String> userIds(List<JsonNode> lines)
   {
-    return lines.stream().map(line -> line.path("userId").asString("")).toList();
+    return lines.stream().map(line -> line.path("user.id").asString("")).toList();
   }
 
   private void assertBaggageSent(String... entries)

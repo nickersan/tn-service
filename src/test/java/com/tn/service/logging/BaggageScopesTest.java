@@ -17,8 +17,8 @@ import org.mockito.InOrder;
 
 class BaggageScopesTest
 {
-  private static final String USER_ID = "userId";
-  private static final String SESSION_ID = "sessionId";
+  private static final String USER_ID = "user.id";
+  private static final String SESSION_ID = "session.id";
 
   private final Tracer tracer = mock(Tracer.class);
 

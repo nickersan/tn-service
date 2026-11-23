@@ -18,7 +18,7 @@ import com.tn.service.logging.RequestLoggingFilter;
 /**
  * Correlated log lines for a servlet service. The request's trace is started by Spring Boot's observation filter
  * ({@code Ordered.HIGHEST_PRECEDENCE + 1}); the request's own baggage is held right after it, and an edge
- * ({@value #EDGE}{@code =true}) discards the {@code userId} it is sent right before it. Each request is logged inside both, once it
+ * ({@value #EDGE}{@code =true}) discards the {@code user.id} (and legacy {@code userId}) it is sent right before it. Each request is logged inside both, once it
  * has been handled.
  */
 @AutoConfiguration(

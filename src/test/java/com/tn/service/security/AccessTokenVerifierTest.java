@@ -183,7 +183,7 @@ class AccessTokenVerifierTest
       RequestContextHolder.resetRequestAttributes();
     }
 
-    assertEquals(List.of("userId=" + SUBJECT), baggage);
+    assertEquals(List.of("user.id=" + SUBJECT), baggage);
   }
 
   @Test

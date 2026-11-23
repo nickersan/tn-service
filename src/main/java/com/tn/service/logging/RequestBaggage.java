@@ -19,9 +19,20 @@ import org.springframework.web.context.request.RequestContextHolder;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RequestBaggage
 {
-  public static final String USER_ID = "userId";
-  public static final String SESSION_ID = "sessionId";
-  public static final String CLIENT = "client";
+  /**
+   * The user a request is for, as a dotted name so it never clashes with a {@code userId} a service logs itself.
+   */
+  public static final String USER_ID = "user.id";
+
+  /**
+   * The session a request is part of, as a dotted name so it never clashes with a {@code sessionId} a service logs itself.
+   */
+  public static final String SESSION_ID = "session.id";
+
+  /**
+   * The client (web, android...) a request came from, as a dotted name so it never clashes with a {@code client} a service logs itself.
+   */
+  public static final String CLIENT = "client.name";
 
   static final String ATTRIBUTE = RequestBaggage.class.getName();
 
