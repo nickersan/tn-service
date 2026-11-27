@@ -5,6 +5,12 @@
       "type": "java.lang.Boolean",
       "description": "Whether this service is an edge (a BFF), which discards the user.id (and legacy userId) baggage it is sent, so no caller can make its log lines look like someone else's.",
       "defaultValue": false
+    },
+    {
+      "name": "tn.logging.refusals",
+      "type": "java.lang.Boolean",
+      "description": "Whether to write a WARN line saying why a request was refused (a 4xx @ResponseStatus exception or ResponseStatusException): its status, reason and exception type.",
+      "defaultValue": true
     }
   ]
 }

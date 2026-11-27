@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 
 import com.tn.service.logging.EdgeBaggageFilter;
+import com.tn.service.logging.RefusalLogger;
 import com.tn.service.logging.RequestBaggageFilter;
 import com.tn.service.logging.RequestLoggingFilter;
 
@@ -19,7 +20,7 @@ import com.tn.service.logging.RequestLoggingFilter;
  * Correlated log lines for a servlet service. The request's trace is started by Spring Boot's observation filter
  * ({@code Ordered.HIGHEST_PRECEDENCE + 1}); the request's own baggage is held right after it, and an edge
  * ({@value #EDGE}{@code =true}) discards the {@code user.id} (and legacy {@code userId}) it is sent right before it. Each request is logged inside both, once it
- * has been handled.
+ * has been handled. Why a request was refused is logged while it is handled, unless {@value #REFUSALS}{@code =false}.
  */
 @AutoConfiguration(
   afterName = {
@@ -31,6 +32,7 @@ import com.tn.service.logging.RequestLoggingFilter;
 public class LoggingAutoConfiguration
 {
   public static final String EDGE = "tn.logging.edge";
+  public static final String REFUSALS = "tn.logging.refusals";
 
   static final int ORDER_EDGE_BAGGAGE = Ordered.HIGHEST_PRECEDENCE;
   static final int ORDER_REQUEST_BAGGAGE = Ordered.HIGHEST_PRECEDENCE + 2;
@@ -43,6 +45,13 @@ public class LoggingAutoConfiguration
     registration.setOrder(ORDER_REQUEST_LOGGING);
 
     return registration;
+  }
+
+  @Bean
+  @ConditionalOnBooleanProperty(name = REFUSALS, matchIfMissing = true)
+  public RefusalLogger refusalLogger()
+  {
+    return new RefusalLogger();
   }
 
   @Bean

@@ -42,6 +42,14 @@ class LoggingAutoConfigurationTest
   }
 
   @Test
+  void shouldLogWhyARequestWasRefusedUnlessTurnedOff()
+  {
+    contextRunner.run(context -> assertTrue(context.containsBean("refusalLogger")));
+    contextRunner.withPropertyValues("tn.logging.refusals=true").run(context -> assertTrue(context.containsBean("refusalLogger")));
+    contextRunner.withPropertyValues("tn.logging.refusals=false").run(context -> assertFalse(context.containsBean("refusalLogger")));
+  }
+
+  @Test
   void shouldHoldNoBaggageWithoutATracer()
   {
     contextRunner.run(
@@ -66,6 +74,12 @@ class LoggingAutoConfigurationTest
     new ApplicationContextRunner()
       .withConfiguration(AutoConfigurations.of(LoggingAutoConfiguration.class))
       .withPropertyValues("tn.logging.edge=true")
-      .run(context -> assertFalse(context.containsBean("requestLoggingFilter")));
+      .run(
+        context ->
+        {
+          assertFalse(context.containsBean("requestLoggingFilter"));
+          assertFalse(context.containsBean("refusalLogger"));
+        }
+      );
   }
 }

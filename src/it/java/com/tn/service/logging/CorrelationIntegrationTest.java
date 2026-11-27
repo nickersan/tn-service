@@ -27,7 +27,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.ApplicationContext;
+import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import com.tn.service.security.DelegateUserToken;
 
@@ -221,6 +223,62 @@ class CorrelationIntegrationTest
     assertFalse(line.toString().contains("do-not-log"));
   }
 
+  /** A refusal says why, beside the request's line and with the same trace and baggage; it is answered as Spring Boot answers any. */
+  @Test
+  void shouldLogWhyARequestWasRefused() throws Exception
+  {
+    HttpResponse<String> response = getBody(
+      "/refused?profile=post-video",
+      "traceparent", TRACEPARENT,
+      "baggage", "user.id=" + SUBJECT + ",session.id=s-1,client.name=web"
+    );
+
+    assertEquals(400, response.statusCode());
+    assertAnsweredAsSpringBootAnswers(response, 400, "Bad Request", "/refused");
+
+    JsonNode request = requestLine();
+    assertEquals(400, request.path("status").asInt());
+    JsonNode refusal = refusalLine();
+    assertEquals("WARN", refusal.path("level").asString());
+    assertEquals("Refused status=400 reason=No such upload profile: post-video", refusal.path("message").asString());
+    assertEquals(400, refusal.path("status").asInt());
+    assertEquals("No such upload profile: post-video", refusal.path("reason").asString());
+    assertEquals(CorrelatedService.InvalidException.class.getName(), refusal.path("exception").asString());
+    for (String field : List.of("traceId", "user.id", "session.id", "client.name", "service.name", "service.version"))
+    {
+      assertFalse(request.path(field).asString("").isEmpty(), field + " missing from " + request);
+      assertEquals(request.path(field).asString(), refusal.path(field).asString(), field);
+    }
+    assertEquals(TRACE_ID, refusal.path("traceId").asString());
+    assertEquals(SUBJECT, refusal.path("user.id").asString());
+  }
+
+  /** A {@code ResponseStatusException} says why too, with the reason it was given. */
+  @Test
+  void shouldLogWhyARequestWasRefusedWithAResponseStatusException() throws Exception
+  {
+    HttpResponse<String> response = getBody("/refused-with-status", "traceparent", TRACEPARENT);
+
+    assertEquals(409, response.statusCode());
+    assertAnsweredAsSpringBootAnswers(response, 409, "Conflict", "/refused-with-status");
+
+    JsonNode refusal = refusalLine();
+    assertEquals(409, refusal.path("status").asInt());
+    assertEquals("Already taken: 3", refusal.path("reason").asString());
+    assertEquals(ResponseStatusException.class.getName(), refusal.path("exception").asString());
+    assertEquals(TRACE_ID, refusal.path("traceId").asString());
+  }
+
+  /** A failure is not a refusal. */
+  @Test
+  void shouldNotLogAFailureAsARefusal() throws Exception
+  {
+    assertEquals(500, get("/failed").statusCode());
+    assertEquals(200, get("/logged").statusCode());
+
+    assertTrue(jsonLines.linesFrom(RefusalLogger.class).isEmpty());
+  }
+
   /** Probes are not logged. */
   @Test
   void shouldNotLogProbesOrNoop() throws Exception
@@ -264,6 +322,34 @@ class CorrelationIntegrationTest
     {
       return httpClient.send(request.build(), HttpResponse.BodyHandlers.discarding());
     }
+  }
+
+  private HttpResponse<String> getBody(String path, String... headers) throws IOException, InterruptedException
+  {
+    HttpRequest.Builder request = HttpRequest.newBuilder(URI.create("http://localhost:" + port + path)).headers(headers);
+
+    try (HttpClient httpClient = HttpClient.newHttpClient())
+    {
+      return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+  }
+
+  private void assertAnsweredAsSpringBootAnswers(HttpResponse<String> response, int status, String error, String path)
+  {
+    // Spring Boot's own body, as before the refusal was logged: never the reason
+    JsonNode body = JsonMapper.builder().build().readTree(response.body());
+    assertEquals(Set.of("timestamp", "status", "error", "path"), Set.copyOf(body.propertyNames()), body.toString());
+    assertEquals(status, body.path("status").asInt());
+    assertEquals(error, body.path("error").asString());
+    assertEquals(path, body.path("path").asString());
+  }
+
+  private JsonNode refusalLine()
+  {
+    List<JsonNode> lines = jsonLines.linesFrom(RefusalLogger.class);
+    assertEquals(1, lines.size(), lines.toString());
+
+    return lines.getFirst();
   }
 
   private List<JsonNode> requestLines()

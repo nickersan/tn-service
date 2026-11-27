@@ -13,19 +13,22 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.tn.service.autoconfig.ControllerAutoConfiguration;
 import com.tn.service.security.AccessTokenVerifier;
 import com.tn.service.security.DelegateUserToken;
 
 /**
- * A service that logs while it handles a request, verifies the token it is sent and calls another service with a client from Spring's
- * {@link RestClient.Builder}, as a tn service does.
+ * A service that logs while it handles a request, verifies the token it is sent, calls another service with a client from Spring's
+ * {@link RestClient.Builder} and refuses requests, as a tn service does.
  */
 @Configuration
 @EnableAutoConfiguration
@@ -90,11 +93,38 @@ class CorrelatedService
       log.info("called");
     }
 
+    @GetMapping("/refused")
+    void refused(@RequestParam("profile") String profile)
+    {
+      throw new InvalidException("No such upload profile: " + profile);
+    }
+
+    @GetMapping("/refused-with-status")
+    void refusedWithStatus()
+    {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Already taken: 3");
+    }
+
+    @GetMapping("/failed")
+    void failed()
+    {
+      throw new IllegalStateException("Broken: everything");
+    }
+
     @GetMapping("/own-fields")
     void ownFields(@RequestHeader(DelegateUserToken.HEADER) String token)
     {
       accessTokenVerifier.subjectRequired(token);
       log.info("own fields", kv("userId", "own-user"), kv("sessionId", "own-session"), kv("client", "own-client"));
+    }
+  }
+
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  static class InvalidException extends RuntimeException
+  {
+    InvalidException(String message)
+    {
+      super(message);
     }
   }
 }
